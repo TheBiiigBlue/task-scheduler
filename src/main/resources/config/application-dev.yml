@@ -1,0 +1,13 @@
+#开发环境配置
+server:
+  port:  8085
+  servlet:
+    context-path: /scheduler
+  tomcat:
+    uri-encoding: utf-8
+spring:
+   http:
+     encoding:
+       charset: UTF-8
+       enabled: true
+       force: true

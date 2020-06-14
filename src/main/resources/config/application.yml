@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: dev
+    include: param
+
+    
+   
+
