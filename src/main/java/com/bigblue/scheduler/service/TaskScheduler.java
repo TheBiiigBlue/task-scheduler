@@ -14,6 +14,15 @@ public interface TaskScheduler {
 
     /**
      * @Author: TheBigBlue
+     * @Description: 解析项目内容，转化为执行逻辑NodeTasks并执行
+     * @Date: 2020/6/15
+     * @Param jobContent:
+     * @Return: java.util.Map<java.lang.String,com.bigblue.scheduler.domain.NodeTask>
+     **/
+    void parseTasksAndSchedule(String jobContent);
+
+    /**
+     * @Author: TheBigBlue
      * @Description: 组装Tasks
      * @Date: 2020/6/13
      * @Param nodeTasks:

@@ -57,6 +57,8 @@ public class DAGTaskScheduler implements TaskScheduler {
 
     @Autowired
     private TaskManager taskManager;
+    @Autowired
+    private TaskParser taskParser;
 
     /**
      * 任务调度器线程Map （每个ParentTask 对应一个Thread）
@@ -74,6 +76,17 @@ public class DAGTaskScheduler implements TaskScheduler {
      */
     private Map<String, BlockingQueue<TaskResult>> tasksScheduleQueueMap = Maps.newConcurrentMap();
 
+    /**
+     * 解析项目内容，转化为执行逻辑NodeTasks，并执行
+     *
+     * @param jobContent
+     * @return
+     */
+    @Override
+    public void parseTasksAndSchedule(String jobContent) {
+        Map<String, NodeTask> nodeTasks = taskParser.parseNodeTasks(jobContent);
+        startNodeTasks(nodeTasks);
+    }
 
     /**
      * 当前所有 NodeTasks 会被当成一个整体进行调度（形成一个 有向无环图 tasks）
