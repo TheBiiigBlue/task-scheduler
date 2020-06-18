@@ -201,7 +201,7 @@ public class DAGTaskScheduler implements TaskScheduler {
                 List<NodeTask> nodeTasksToBeScheduled = taskManager.nodeTasksToBeScheduled(parentTask);
                 if (CollectionUtils.isEmpty(nodeTasksToBeScheduled)) {
                     //等待最后一个Task完成
-                    while (!parentTask.isFailOrFinish()) {
+                    while (!parentTask.isSuccess()) {
                     }
                     //最后一个Task完成，退出
                     break;

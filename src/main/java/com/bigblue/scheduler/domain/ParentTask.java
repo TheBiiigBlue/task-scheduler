@@ -67,6 +67,10 @@ public class ParentTask {
         return parentTaskStatus == TaskStatus.fail;
     }
 
+    public boolean isSuccess() {
+        return nodeTaskSuccCnt.get() == nodeTasks.size();
+    }
+
     /**
      * @Author: TheBigBlue
      * @Description: Task是否失败或完成
