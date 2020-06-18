@@ -28,9 +28,7 @@ public class TaskParser {
      * @Param jobContent:
      * @Return: java.util.Map<java.lang.String, com.bigblue.scheduler.domain.NodeTask>
      **/
-    public Map<String, NodeTask> parseNodeTasks(String jobContent) {
-        Random random = new Random(5);
-        JsonContent jsonContent = JSONObject.parseObject(jobContent, JsonContent.class);
+    public Map<String, NodeTask> parseNodeTasks(JsonContent jsonContent) {
         List<JsonNode> nodes = jsonContent.getNodes();
         List<JsonEdge> edges = jsonContent.getEdges();
         Map<String, NodeTask> nodeTasks = nodes.stream().map(node -> {
@@ -40,7 +38,6 @@ public class TaskParser {
                 //TODO 根据type，反射不同的处理类
                 Constructor<?> constructor = Class.forName("com.bigblue.scheduler.test.MyNodeTask")
                         .getConstructor(long.class, String.class, Set.class);
-                random.nextInt();
                 nodeTask = (NodeTask) constructor.newInstance((int) (1 + Math.random() * 5) * 1000, node.getId(), dependencies);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -48,6 +45,11 @@ public class TaskParser {
             return nodeTask;
         }).collect(Collectors.toMap(NodeTask::getId, v -> v));
         return nodeTasks;
+    }
+
+    public Map<String, NodeTask> parseNodeTasks(String jobContent) {
+        JsonContent jsonContent = JSONObject.parseObject(jobContent, JsonContent.class);
+        return this.parseNodeTasks(jsonContent);
     }
 
     private Set<String> getDependencies(List<JsonEdge> edges, JsonNode node) {

@@ -1,13 +1,19 @@
 package com.bigblue.scheduler.test;
 
 import com.bigblue.scheduler.domain.NodeTask;
+import com.bigblue.scheduler.domain.ParentTask;
+import com.bigblue.scheduler.domain.json.JsonContent;
+import com.bigblue.scheduler.manager.TaskManager;
 import com.bigblue.scheduler.service.TaskScheduler;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,6 +26,8 @@ public class TaskScheduleTests {
 
     @Autowired
     private TaskScheduler taskScheduler;
+    @Autowired
+    private TaskManager taskManager;
 
     @GetMapping("/test1")
     public void test1() {
@@ -49,10 +57,29 @@ public class TaskScheduleTests {
         taskScheduler.parseTasksAndSchedule(jsonStr);
     }
 
+    @PostMapping("/invoke")
+    public Object invoke(@RequestBody JsonContent jsonContent) {
+        String parentTaskId = taskScheduler.parseTasksAndSchedule(jsonContent);
+        Map<String, Object> map = new HashMap<>();
+        map.put("message", "success");
+        map.put("parentTaskId", parentTaskId);
+        return map;
+    }
+
+    @GetMapping("/progress")
+    public Object getProgress(String parentTaskId) {
+        ParentTask parentTask = taskManager.getParentTask(parentTaskId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("message", "success");
+        map.put("progress", parentTask == null ? null : parentTask.getProgress());
+        map.put("status", parentTask.getTasksStatus());
+        return map;
+    }
+
     /**
      * A   B
      * C   D
-     * E
+     *   E
      * F   G
      *
      * @return
@@ -69,7 +96,7 @@ public class TaskScheduleTests {
     /**
      * A   B   F   G
      * C   D
-     * E
+     *   E
      *
      * @return
      */

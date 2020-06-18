@@ -1,8 +1,6 @@
 package com.bigblue.scheduler.test;
 
-import com.bigblue.scheduler.base.enums.TaskStatus;
 import com.bigblue.scheduler.domain.NodeTask;
-import com.bigblue.scheduler.domain.TaskResult;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,17 +28,15 @@ public class MyNodeTask extends NodeTask {
     }
 
     @Override
-    public TaskResult doTask() throws Exception {
-//        System.out.println("begin to run MyNodeTask【" + this.getId() + "】, time escape(ms): [" + runTime + "]");
+    public Map<String, Object> doTask() throws Exception {
         TimeUnit.MILLISECONDS.sleep(runTime);
         if (this.getId().endsWith("F")) {
             throw new RuntimeException(this.getId() + " exception");
         }
         String msg = "finish MyNodeTask( " + this.getId() + " )";
-//        System.out.println(msg);
         Map<String, Object> result = new HashMap<>();
         result.put("msg", msg);
-        return new TaskResult(this.getId(), TaskStatus.success, result);
+        return result;
     }
 }
 

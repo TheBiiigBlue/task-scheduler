@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -43,9 +44,11 @@ public class ParentTask {
      * @Date: 2020/6/13
      * @Return:
      **/
-    public Map<String, TaskStatus> getTasksStatus() {
+    public List<TaskResult> getTasksStatus() {
         Collection<NodeTask> values = nodeTasks.values();
-        return values.stream().collect(Collectors.toMap(NodeTask::getId, NodeTask::getTaskStatus));
+        return values.stream().map(nodeTask ->
+                new TaskResult(nodeTask.getId(), nodeTask.getTaskStatus(), nodeTask.getTakeTime()))
+                .collect(Collectors.toList());
     }
 
     public NodeTask getNodeTask(String nodeTaskId) {

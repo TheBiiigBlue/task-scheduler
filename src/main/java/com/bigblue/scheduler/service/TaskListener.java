@@ -2,7 +2,8 @@ package com.bigblue.scheduler.service;
 
 
 import com.bigblue.scheduler.domain.ParentTask;
-import com.bigblue.scheduler.domain.TaskResult;
+
+import java.util.Map;
 
 /**
  * @Author: TheBigBlue
@@ -14,7 +15,7 @@ public interface TaskListener {
     /**
      * 当nodeTask执行success后，会触发该方法
      */
-    void process(String taskId, ParentTask parentTask, TaskResult result);
+    void process(String taskId, ParentTask parentTask, Map<String, Object> result);
 
     /**
      * 当nodeTask执行fail后，会触发该方法

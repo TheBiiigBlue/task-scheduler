@@ -3,13 +3,14 @@ package com.bigblue.scheduler.manager;
 import com.alibaba.fastjson.JSONObject;
 import com.bigblue.scheduler.base.enums.TaskStatus;
 import com.bigblue.scheduler.domain.ParentTask;
-import com.bigblue.scheduler.domain.TaskResult;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * @Author: TheBigBlue
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
 @Getter
 @Setter
 @NoArgsConstructor
-public class TaskExecCallback implements FutureCallback<TaskResult> {
+public class TaskExecCallback implements FutureCallback<Map<String, Object>> {
 
     private static Logger logger = LoggerFactory.getLogger(TaskExecCallback.class);
 
@@ -37,7 +38,7 @@ public class TaskExecCallback implements FutureCallback<TaskResult> {
     }
 
     @Override
-    public void onSuccess(TaskResult result) throws RuntimeException {
+    public void onSuccess(Map<String, Object> result) throws RuntimeException {
         try {
             //更新任务状态
             ParentTask parentTask = taskManager.getParentTask(parentTaskId);

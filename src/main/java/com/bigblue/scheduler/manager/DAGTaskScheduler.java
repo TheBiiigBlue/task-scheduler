@@ -3,7 +3,7 @@ package com.bigblue.scheduler.manager;
 import com.bigblue.scheduler.base.enums.TaskStatus;
 import com.bigblue.scheduler.domain.NodeTask;
 import com.bigblue.scheduler.domain.ParentTask;
-import com.bigblue.scheduler.domain.TaskResult;
+import com.bigblue.scheduler.domain.json.JsonContent;
 import com.bigblue.scheduler.service.TaskListener;
 import com.bigblue.scheduler.service.TaskScheduler;
 import com.bigblue.scheduler.service.impl.SimpleTaskListener;
@@ -74,7 +74,13 @@ public class DAGTaskScheduler implements TaskScheduler {
     /**
      * 已完成Task队列，每个ParentTask一个队列
      */
-    private Map<String, BlockingQueue<TaskResult>> tasksScheduleQueueMap = Maps.newConcurrentMap();
+    private Map<String, BlockingQueue<Map<String, Object>>> tasksScheduleQueueMap = Maps.newConcurrentMap();
+
+    @Override
+    public String parseTasksAndSchedule(JsonContent jsonContent) {
+        Map<String, NodeTask> nodeTasks = taskParser.parseNodeTasks(jsonContent);
+        return startNodeTasks(nodeTasks);
+    }
 
     /**
      * 解析项目内容，转化为执行逻辑NodeTasks，并执行
@@ -83,9 +89,9 @@ public class DAGTaskScheduler implements TaskScheduler {
      * @return
      */
     @Override
-    public void parseTasksAndSchedule(String jobContent) {
+    public String parseTasksAndSchedule(String jobContent) {
         Map<String, NodeTask> nodeTasks = taskParser.parseNodeTasks(jobContent);
-        startNodeTasks(nodeTasks);
+        return startNodeTasks(nodeTasks);
     }
 
     /**
@@ -94,8 +100,8 @@ public class DAGTaskScheduler implements TaskScheduler {
      * @param nodeTasks 所有的tasks
      */
     @Override
-    public void startNodeTasks(Map<String, NodeTask> nodeTasks) {
-        startNodeTasks(nodeTasks, new SimpleTaskListener());
+    public String startNodeTasks(Map<String, NodeTask> nodeTasks) {
+        return startNodeTasks(nodeTasks, new SimpleTaskListener());
     }
 
     /**
@@ -105,9 +111,9 @@ public class DAGTaskScheduler implements TaskScheduler {
      * @param statusListener 用于监听任务的状态
      */
     @Override
-    public void startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) {
+    public String startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) {
         //分配partentTask
-        String parentTaskId = UUID.randomUUID().toString();
+        String parentTaskId = UUID.randomUUID().toString().replace("-", "").substring(0, 7);
         //创建partentTask
         ParentTask parentTask = ParentTask.builder()
                 .id(parentTaskId)
@@ -116,6 +122,7 @@ public class DAGTaskScheduler implements TaskScheduler {
                 .taskListener(statusListener).build();
         //启动partentTask
         this.startParentTask(parentTask);
+        return parentTaskId;
     }
 
     /**
@@ -178,7 +185,7 @@ public class DAGTaskScheduler implements TaskScheduler {
         //初始化调度队列
         initTaskScheduleQueue(parentTaskId);
         //获取初始化后的调度队列
-        BlockingQueue<TaskResult> taskScheduleQueue = tasksScheduleQueueMap.get(parentTaskId);
+        BlockingQueue<Map<String, Object>> taskScheduleQueue = tasksScheduleQueueMap.get(parentTaskId);
         //运行没有依赖的task
         runNoDependentNodeTasks(parentTaskId);
         while (true) {
@@ -235,7 +242,7 @@ public class DAGTaskScheduler implements TaskScheduler {
         if (tasksScheduleQueueMap.get(parentTaskId) == null) {
             synchronized (tasksScheduleQueueMap) {
                 if (tasksScheduleQueueMap.get(parentTaskId) == null) {
-                    BlockingQueue<TaskResult> queue = Queues.newLinkedBlockingQueue();
+                    BlockingQueue<Map<String, Object>> queue = Queues.newLinkedBlockingQueue();
                     tasksScheduleQueueMap.put(parentTaskId, queue);
                 }
             }
@@ -286,16 +293,16 @@ public class DAGTaskScheduler implements TaskScheduler {
      * 运行成功后推入队列
      *
      * @param parentTaskId
-     * @param nodeTaskResult
+     * @param result
      */
-    public void addNodeTaskResultToTail(String parentTaskId, TaskResult nodeTaskResult) throws InterruptedException {
-        if (ObjectUtils.isEmpty(nodeTaskResult) || Strings.isNullOrEmpty(parentTaskId)) {
+    public void addNodeTaskResultToTail(String parentTaskId, Map<String, Object> result) throws InterruptedException {
+        if (ObjectUtils.isEmpty(result) || Strings.isNullOrEmpty(parentTaskId)) {
             return;
         }
-        BlockingQueue<TaskResult> blockingQueue = tasksScheduleQueueMap.get(parentTaskId);
+        BlockingQueue<Map<String, Object>> blockingQueue = tasksScheduleQueueMap.get(parentTaskId);
         if (blockingQueue != null) {
             //插入到队尾
-            blockingQueue.put(nodeTaskResult);
+            blockingQueue.put(result);
         }
     }
 

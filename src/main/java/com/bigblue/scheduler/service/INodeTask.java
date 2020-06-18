@@ -1,6 +1,6 @@
 package com.bigblue.scheduler.service;
 
-import com.bigblue.scheduler.domain.TaskResult;
+import java.util.Map;
 
 /**
  * @Author: TheBigBlue
@@ -10,10 +10,9 @@ import com.bigblue.scheduler.domain.TaskResult;
 public interface INodeTask {
 
     /**
-     * @Author: TheBigBlue 
+     * @Author: TheBigBlue
      * @Description: 执行自定义的Task逻辑，当有异常后抛出
      * @Date: 2020/6/12
-     * @Return: T
      **/
-    TaskResult doTask() throws Exception;
+    Map<String, Object> doTask() throws Exception;
 }

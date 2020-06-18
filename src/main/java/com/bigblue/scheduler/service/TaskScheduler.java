@@ -2,6 +2,7 @@ package com.bigblue.scheduler.service;
 
 import com.bigblue.scheduler.base.enums.TaskStatus;
 import com.bigblue.scheduler.domain.NodeTask;
+import com.bigblue.scheduler.domain.json.JsonContent;
 
 import java.util.Map;
 
@@ -12,14 +13,15 @@ import java.util.Map;
  */
 public interface TaskScheduler {
 
+    String parseTasksAndSchedule(JsonContent jsonContent);
+
     /**
      * @Author: TheBigBlue
      * @Description: 解析项目内容，转化为执行逻辑NodeTasks并执行
      * @Date: 2020/6/15
      * @Param jobContent:
-     * @Return: java.util.Map<java.lang.String,com.bigblue.scheduler.domain.NodeTask>
      **/
-    void parseTasksAndSchedule(String jobContent);
+    String parseTasksAndSchedule(String jobContent);
 
     /**
      * @Author: TheBigBlue
@@ -28,7 +30,7 @@ public interface TaskScheduler {
      * @Param nodeTasks:
      * @Return:
      **/
-    void startNodeTasks(Map<String, NodeTask> nodeTasks) throws RuntimeException;
+    String startNodeTasks(Map<String, NodeTask> nodeTasks) throws RuntimeException;
 
     /**
      * @Author: TheBigBlue
@@ -37,7 +39,7 @@ public interface TaskScheduler {
      * @Param nodeTasks:
      * @Return:
      **/
-    void startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) throws RuntimeException;
+    String startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) throws RuntimeException;
 
     /**
      * @Author: TheBigBlue
