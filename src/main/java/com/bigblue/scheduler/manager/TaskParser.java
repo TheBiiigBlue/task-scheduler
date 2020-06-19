@@ -5,11 +5,16 @@ import com.bigblue.scheduler.domain.NodeTask;
 import com.bigblue.scheduler.domain.json.JsonContent;
 import com.bigblue.scheduler.domain.json.JsonEdge;
 import com.bigblue.scheduler.domain.json.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +25,8 @@ import java.util.stream.Collectors;
 @Component
 @Order(1002)
 public class TaskParser {
+
+    private static Logger logger = LoggerFactory.getLogger(TaskParser.class);
 
     /**
      * @Author: TheBigBlue
@@ -34,13 +41,16 @@ public class TaskParser {
         Map<String, NodeTask> nodeTasks = nodes.stream().map(node -> {
             NodeTask nodeTask = null;
             Set<String> dependencies = getDependencies(edges, node);
+            String className = "com.bigblue.scheduler.test.MyNodeTask";
+//            String className = node.getType();
             try {
                 //TODO 根据type，反射不同的处理类
-                Constructor<?> constructor = Class.forName("com.bigblue.scheduler.test.MyNodeTask")
+                Constructor<?> constructor = Class.forName(className)
                         .getConstructor(long.class, String.class, Set.class);
                 nodeTask = (NodeTask) constructor.newInstance((int) (1 + Math.random() * 5) * 1000, node.getId(), dependencies);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("no corresponding processing class: {}", className);
+                throw new RuntimeException("no corresponding processing class");
             }
             return nodeTask;
         }).collect(Collectors.toMap(NodeTask::getId, v -> v));

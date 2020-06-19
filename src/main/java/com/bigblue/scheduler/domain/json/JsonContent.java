@@ -14,5 +14,5 @@ public class JsonContent {
 
     private List<JsonEdge> edges;
     private List<JsonNode> nodes;
-    private String prjId;
+    private String jobId;
 }

@@ -2,7 +2,6 @@ package com.bigblue.scheduler.domain;
 
 import com.bigblue.scheduler.base.enums.TaskStatus;
 import com.bigblue.scheduler.service.INodeTask;
-import com.bigblue.scheduler.test.MyNodeTask;
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +23,7 @@ import java.util.concurrent.Callable;
 @AllArgsConstructor
 public abstract class NodeTask implements Callable<Map<String, Object>>, INodeTask {
 
-    private static Logger logger = LoggerFactory.getLogger(MyNodeTask.class);
+    private static Logger logger = LoggerFactory.getLogger(NodeTask.class);
 
     private String id;
     //依赖的nodeTask id

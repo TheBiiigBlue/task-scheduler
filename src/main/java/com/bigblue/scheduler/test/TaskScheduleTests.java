@@ -1,10 +1,12 @@
 package com.bigblue.scheduler.test;
 
+import com.bigblue.scheduler.base.utils.GuavaUtils;
 import com.bigblue.scheduler.domain.NodeTask;
 import com.bigblue.scheduler.domain.ParentTask;
 import com.bigblue.scheduler.domain.json.JsonContent;
 import com.bigblue.scheduler.manager.TaskManager;
 import com.bigblue.scheduler.service.TaskScheduler;
+import com.bigblue.scheduler.service.impl.SimpleTaskListener;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +36,7 @@ public class TaskScheduleTests {
         //解析报文，生成Task
         Map<String, NodeTask> nodeTaskMap = dataParse1();
         //调度
-        taskScheduler.startNodeTasks(nodeTaskMap);
+        taskScheduler.startNodeTasks(nodeTaskMap, new SimpleTaskListener());
     }
 
     @GetMapping("/test2")
@@ -42,7 +44,7 @@ public class TaskScheduleTests {
         //解析报文，生成Task
         Map<String, NodeTask> nodeTaskMap = dataParse2();
         //调度
-        taskScheduler.startNodeTasks(nodeTaskMap);
+        taskScheduler.startNodeTasks(nodeTaskMap, new SimpleTaskListener());
     }
 
     @GetMapping("/test3")
@@ -59,21 +61,22 @@ public class TaskScheduleTests {
 
     @PostMapping("/invoke")
     public Object invoke(@RequestBody JsonContent jsonContent) {
-        String parentTaskId = taskScheduler.parseTasksAndSchedule(jsonContent);
         Map<String, Object> map = new HashMap<>();
-        map.put("message", "success");
-        map.put("parentTaskId", parentTaskId);
+        try {
+            String jobId = taskScheduler.parseTasksAndSchedule(jsonContent);
+            map.put("message", "success");
+            map.put("jobId", jobId);
+        }catch (Exception e) {
+            map.put("message", "fail");
+            map.put("messageInfo", e.getMessage());
+        }
         return map;
     }
 
     @GetMapping("/progress")
-    public Object getProgress(String parentTaskId) {
-        ParentTask parentTask = taskManager.getParentTask(parentTaskId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("message", "success");
-        map.put("progress", parentTask == null ? null : parentTask.getProgress());
-        map.put("status", parentTask.getTasksStatus());
-        return map;
+    public Object getProgress(String jobId) {
+        Map<String, Object> resultMap = (Map<String, Object>) GuavaUtils.get(jobId);
+        return resultMap == null ? new HashMap<>() : resultMap;
     }
 
     /**

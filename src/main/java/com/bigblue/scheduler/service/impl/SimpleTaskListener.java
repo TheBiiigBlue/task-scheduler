@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class SimpleTaskListener implements TaskListener {
 
-    private static Logger logger = LoggerFactory.getLogger(TaskExecCallback.class);
+    private static Logger logger = LoggerFactory.getLogger(SimpleTaskListener.class);
 
     @Override
     public void process(String taskId, ParentTask parentTask, Map<String, Object> result) {

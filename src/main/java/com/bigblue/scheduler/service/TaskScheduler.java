@@ -30,15 +30,6 @@ public interface TaskScheduler {
      * @Param nodeTasks:
      * @Return:
      **/
-    String startNodeTasks(Map<String, NodeTask> nodeTasks) throws RuntimeException;
-
-    /**
-     * @Author: TheBigBlue
-     * @Description: 组装Tasks
-     * @Date: 2020/6/13
-     * @Param nodeTasks:
-     * @Return:
-     **/
     String startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) throws RuntimeException;
 
     /**
