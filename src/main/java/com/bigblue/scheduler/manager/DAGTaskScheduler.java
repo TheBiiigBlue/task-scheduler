@@ -249,7 +249,7 @@ public class DAGTaskScheduler implements TaskScheduler {
             }
             logger.info("nodeTask has bean submitted successfully, jobId: {}, nodeTaskId: {}", jobId, nodeTask.getId());
             //设置异步回调
-            Futures.addCallback(future, new TaskExecCallback(jobId, nodeTaskId, taskManager, this));
+            Futures.addCallback(future, new TaskExecCallback(jobId, nodeTaskId, taskManager, this), pool);
         } catch (Exception e) {
             logger.error("nodeTask submit fail, jobId: {}, nodeTaskId: {}", jobId, nodeTaskId, e);
             this.cancelTaskSchedule(jobId, TaskStatus.fail);

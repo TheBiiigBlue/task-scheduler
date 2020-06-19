@@ -39,7 +39,6 @@ public class TaskParser {
         List<JsonNode> nodes = jsonContent.getNodes();
         List<JsonEdge> edges = jsonContent.getEdges();
         Map<String, NodeTask> nodeTasks = nodes.stream().map(node -> {
-            NodeTask nodeTask = null;
             Set<String> dependencies = getDependencies(edges, node);
             String className = "com.bigblue.scheduler.test.MyNodeTask";
 //            String className = node.getType();
@@ -47,12 +46,11 @@ public class TaskParser {
                 //TODO 根据type，反射不同的处理类
                 Constructor<?> constructor = Class.forName(className)
                         .getConstructor(long.class, String.class, Set.class);
-                nodeTask = (NodeTask) constructor.newInstance((int) (1 + Math.random() * 5) * 1000, node.getId(), dependencies);
+                return  (NodeTask) constructor.newInstance((int) (1 + Math.random() * 5) * 1000, node.getId(), dependencies);
             } catch (Exception e) {
                 logger.error("no corresponding processing class: {}", className);
                 throw new RuntimeException("no corresponding processing class");
             }
-            return nodeTask;
         }).collect(Collectors.toMap(NodeTask::getId, v -> v));
         return nodeTasks;
     }
