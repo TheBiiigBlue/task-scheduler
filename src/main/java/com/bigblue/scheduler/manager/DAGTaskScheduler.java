@@ -199,7 +199,6 @@ public class DAGTaskScheduler implements TaskScheduler {
         }
         //终止调度线程
         cancelTaskSchedule(jobId, parentTaskStatus);
-        System.out.println("thread size: " + taskScheduleThreadMap.size());
         //清除logger
         logger.removeLogger(jobId);
     }
