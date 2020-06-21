@@ -12,9 +12,12 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @Author: TheBigBlue
@@ -27,6 +30,8 @@ public class WebSocketController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketController.class);
 
+    private ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
     private Process process;
     private InputStream inputStream;
 
@@ -35,16 +40,19 @@ public class WebSocketController {
      */
     @OnOpen
     public void onOpen(@PathParam("jobId") String jobId, Session session) {
+
         LOGGER.info("[{}]加入连接!", jobId);
         try {
             String dateStr = DateUtil.getNowDateFormat(new Date());
             String filePath = new StringBuilder(System.getProperty("user.dir")).append("/logs/")
                     .append(dateStr).append("/").append(jobId).append(".log").toString();
             // 执行tail -f命令，由于是tail命令，需要在linux系统执行
-            process = Runtime.getRuntime().exec("tail -f " + filePath);
-            inputStream = process.getInputStream();
+//            process = Runtime.getRuntime().exec("tail -f " + filePath);
+//            inputStream = process.getInputStream();
+            inputStream = new FileInputStream(filePath);
             // 一定要启动新的线程，防止InputStream阻塞处理WebSocket的线程
-            new TailLogThread(inputStream, session).start();
+            pool.submit(new TailLogThread(inputStream, session));
+//            new TailLogThread(inputStream, session).start();
         } catch (IOException e) {
             LOGGER.error("[{}]获取日志内容失败。", jobId, e);
             onClose(jobId);
