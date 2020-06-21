@@ -1,6 +1,5 @@
 package com.bigblue.scheduler.manager;
 
-import com.alibaba.fastjson.JSONObject;
 import com.bigblue.scheduler.domain.NodeTask;
 import com.bigblue.scheduler.domain.json.JsonContent;
 import com.bigblue.scheduler.domain.json.JsonEdge;
@@ -38,6 +37,7 @@ public class TaskParser {
     public Map<String, NodeTask> parseNodeTasks(JsonContent jsonContent) {
         List<JsonNode> nodes = jsonContent.getNodes();
         List<JsonEdge> edges = jsonContent.getEdges();
+        String jobId = jsonContent.getJobId();
         Map<String, NodeTask> nodeTasks = nodes.stream().map(node -> {
             Set<String> dependencies = getDependencies(edges, node);
             String className = "com.bigblue.scheduler.test.MyNodeTask";
@@ -45,19 +45,14 @@ public class TaskParser {
             try {
                 //TODO 根据type，反射不同的处理类
                 Constructor<?> constructor = Class.forName(className)
-                        .getConstructor(long.class, String.class, Set.class);
-                return  (NodeTask) constructor.newInstance((int) (1 + Math.random() * 5) * 1000, node.getId(), dependencies);
+                        .getConstructor(long.class, String.class, String.class, Set.class);
+                return  (NodeTask) constructor.newInstance((int) (1 + Math.random() * 5) * 1000, jobId, node.getId(), dependencies);
             } catch (Exception e) {
                 logger.error("no corresponding processing class: {}", className);
                 throw new RuntimeException("no corresponding processing class");
             }
-        }).collect(Collectors.toMap(NodeTask::getId, v -> v));
+        }).collect(Collectors.toMap(NodeTask::getTaskId, v -> v));
         return nodeTasks;
-    }
-
-    public Map<String, NodeTask> parseNodeTasks(String jobContent) {
-        JsonContent jsonContent = JSONObject.parseObject(jobContent, JsonContent.class);
-        return this.parseNodeTasks(jsonContent);
     }
 
     private Set<String> getDependencies(List<JsonEdge> edges, JsonNode node) {

@@ -2,6 +2,8 @@ package com.bigblue.scheduler.manager;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bigblue.scheduler.base.enums.TaskStatus;
+import com.bigblue.scheduler.base.log.SchedulerLogger;
+import com.bigblue.scheduler.base.utils.SpringUtil;
 import com.bigblue.scheduler.domain.ParentTask;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.Getter;
@@ -22,7 +24,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class TaskExecCallback implements FutureCallback<Map<String, Object>> {
 
-    private static Logger logger = LoggerFactory.getLogger(TaskExecCallback.class);
+    private static SchedulerLogger logger = SpringUtil.getBean(SchedulerLogger.class);
 
     private String jobId;
     private String nodeTaskId;
@@ -43,7 +45,7 @@ public class TaskExecCallback implements FutureCallback<Map<String, Object>> {
             //更新任务状态
             ParentTask parentTask = taskManager.getParentTask(jobId);
             if (parentTask == null) {
-                logger.warn("parentTask has finish [or] any nodeTask exception,jobId: {}", jobId);
+                logger.getLogger(jobId).warn("parentTask has finish [or] any nodeTask exception,jobId: {}", jobId);
                 return;
             }
             if (!taskManager.updateTaskStatus(jobId, nodeTaskId, TaskStatus.success)) {
@@ -52,7 +54,7 @@ public class TaskExecCallback implements FutureCallback<Map<String, Object>> {
             }
             //执行监听器
             parentTask.getTaskListener().process(nodeTaskId, parentTask, result);
-            logger.info("nodeTasks status, jobId: {}, status: {}", jobId, JSONObject.toJSONString(parentTask.getTasksStatus()));
+            logger.getLogger(jobId).info("nodeTasks status, jobId: {}, status: {}", jobId, JSONObject.toJSONString(parentTask.getTasksStatus()));
         } catch (Exception e) {
             this.onFailure(e);
         }
@@ -63,7 +65,7 @@ public class TaskExecCallback implements FutureCallback<Map<String, Object>> {
         //触发任务状态监听器
         ParentTask parentTask = taskManager.getParentTask(jobId);
         parentTask.getTaskListener().onFail(nodeTaskId, parentTask, t);
-        logger.error("nodeTask exec fail, jobId: {}, nodeTaskId: {},  status: {}, exception: {}",
+        logger.getLogger(jobId).error("nodeTask exec fail, jobId: {}, nodeTaskId: {},  status: {}, exception: {}",
                 jobId, nodeTaskId, JSONObject.toJSONString(parentTask.getTasksStatus()), t.getMessage());
         taskManager.updateTaskStatus(jobId, nodeTaskId, TaskStatus.fail);
     }

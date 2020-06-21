@@ -1,6 +1,7 @@
 package com.bigblue.scheduler.manager;
 
 import com.bigblue.scheduler.base.enums.TaskStatus;
+import com.bigblue.scheduler.base.log.SchedulerLogger;
 import com.bigblue.scheduler.base.utils.GuavaUtils;
 import com.bigblue.scheduler.domain.NodeTask;
 import com.bigblue.scheduler.domain.ParentTask;
@@ -13,8 +14,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,12 +47,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Order(1002)
 public class DAGTaskScheduler implements TaskScheduler {
 
-    private static Logger logger = LoggerFactory.getLogger(DAGTaskScheduler.class);
-
     @Autowired
     private TaskManager taskManager;
     @Autowired
     private TaskParser taskParser;
+    @Autowired
+    private SchedulerLogger logger;
 
     /**
      * 任务调度器线程Map （每个ParentTask 对应一个Thread）
@@ -70,19 +68,7 @@ public class DAGTaskScheduler implements TaskScheduler {
     @Override
     public String parseTasksAndSchedule(JsonContent jsonContent) {
         Map<String, NodeTask> nodeTasks = taskParser.parseNodeTasks(jsonContent);
-        return startNodeTasks(nodeTasks, new SimpleTaskListener());
-    }
-
-    /**
-     * 解析项目内容，转化为执行逻辑NodeTasks，并执行
-     *
-     * @param jobContent
-     * @return
-     */
-    @Override
-    public String parseTasksAndSchedule(String jobContent) {
-        Map<String, NodeTask> nodeTasks = taskParser.parseNodeTasks(jobContent);
-        return startNodeTasks(nodeTasks, new SimpleTaskListener());
+        return startNodeTasks(jsonContent.getJobId(), nodeTasks, new SimpleTaskListener());
     }
 
     /**
@@ -92,9 +78,8 @@ public class DAGTaskScheduler implements TaskScheduler {
      * @param statusListener 用于监听任务的状态
      */
     @Override
-    public String startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) {
+    public String startNodeTasks(String jobId, Map<String, NodeTask> nodeTasks, TaskListener statusListener) {
         //分配partentTask
-        String jobId = UUID.randomUUID().toString().replace("-", "").substring(0, 7);
         //创建partentTask
         ParentTask parentTask = ParentTask.builder()
                 .id(jobId)
@@ -124,7 +109,7 @@ public class DAGTaskScheduler implements TaskScheduler {
                 //维护threadmap
                 taskScheduleThreadMap.put(jobId, scheduleThread);
                 scheduleThread.start();
-                logger.info("partentTask started! jobId: {}", jobId);
+                logger.getLogger(jobId).info("partentTask started! jobId: {}", jobId);
             }
         } else {
             throw new RuntimeException("duplicate start parentTask:" + jobId);
@@ -172,7 +157,7 @@ public class DAGTaskScheduler implements TaskScheduler {
                 ParentTask parentTask = taskManager.getParentTask(jobId);
                 //校验是否可调度：判断依赖节点是否已执行
                 if (parentTask.isFailOrFinish()) {
-                    logger.info("nodeTask schedule finish or fail, jobId: {}", jobId);
+                    logger.getLogger(jobId).info("nodeTask schedule finish or fail, jobId: {}", jobId);
                     break;
                 }
                 //获取准备调度的Task
@@ -187,26 +172,26 @@ public class DAGTaskScheduler implements TaskScheduler {
                 //调度Task
                 for (NodeTask nodeTask : nodeTasksToBeScheduled) {
                     //可调度，提交任务
-                    if (taskManager.canNodeTaskSchedule(jobId, nodeTask.getId())) {
+                    if (taskManager.canNodeTaskSchedule(jobId, nodeTask.getTaskId())) {
                         submitTask(jobId, nodeTask);
                     }
                 }
             } catch (Exception e) {
-                logger.error("nodeTask schedule fail, jobId: {}", jobId, e);
+                logger.getLogger(jobId).error("nodeTask schedule fail, jobId: {}", jobId, e);
                 break;
             }
         }
         //更新状态
         ParentTask parentTask = taskManager.getParentTask(jobId);
-        logger.info("jobId: {}, scheduled progress: {}", jobId, parentTask.getProgress());
+        logger.getLogger(jobId).info("jobId: {}, scheduled progress: {}", jobId, parentTask.getProgress());
         Map<String, Object> resultMap = (Map<String, Object>) GuavaUtils.get(jobId);
         TaskStatus parentTaskStatus;
         if (parentTask.isFail()) {
             parentTaskStatus = TaskStatus.fail;
-            logger.error("jobId: {}, scheduled fail, thread exit", jobId);
+            logger.getLogger(jobId).error("jobId: {}, scheduled fail, thread exit", jobId);
         } else {
             parentTaskStatus = TaskStatus.success;
-            logger.info("jobId: {}, scheduled success, thread exit", jobId);
+            logger.getLogger(jobId).info("jobId: {}, scheduled success, thread exit", jobId);
         }
         //更新缓存状态
         if (!CollectionUtils.isEmpty(resultMap)) {
@@ -214,6 +199,9 @@ public class DAGTaskScheduler implements TaskScheduler {
         }
         //终止调度线程
         cancelTaskSchedule(jobId, parentTaskStatus);
+        System.out.println("thread size: " + taskScheduleThreadMap.size());
+        //清除logger
+        logger.removeLogger(jobId);
     }
 
     /**
@@ -238,7 +226,7 @@ public class DAGTaskScheduler implements TaskScheduler {
      * @return
      */
     private void submitTask(String jobId, NodeTask nodeTask) {
-        String nodeTaskId = nodeTask.getId();
+        String nodeTaskId = nodeTask.getTaskId();
         try {
             //向线程池提交任务
             ListenableFuture future = pool.submit(nodeTask);
@@ -247,11 +235,11 @@ public class DAGTaskScheduler implements TaskScheduler {
                 //更新失败
                 throw new RuntimeException("update nodeTask status fail, jobId: " + jobId + ", nodeTaskId: " + nodeTaskId);
             }
-            logger.info("nodeTask has bean submitted successfully, jobId: {}, nodeTaskId: {}", jobId, nodeTask.getId());
+            logger.getLogger(jobId).info("nodeTask has bean submitted successfully, jobId: {}, nodeTaskId: {}", jobId, nodeTask.getTaskId());
             //设置异步回调
             Futures.addCallback(future, new TaskExecCallback(jobId, nodeTaskId, taskManager, this), pool);
         } catch (Exception e) {
-            logger.error("nodeTask submit fail, jobId: {}, nodeTaskId: {}", jobId, nodeTaskId, e);
+            logger.getLogger(jobId).error("nodeTask submit fail, jobId: {}, nodeTaskId: {}", jobId, nodeTaskId, e);
             this.cancelTaskSchedule(jobId, TaskStatus.fail);
         }
     }

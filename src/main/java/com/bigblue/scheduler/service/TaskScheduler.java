@@ -17,20 +17,12 @@ public interface TaskScheduler {
 
     /**
      * @Author: TheBigBlue
-     * @Description: 解析项目内容，转化为执行逻辑NodeTasks并执行
-     * @Date: 2020/6/15
-     * @Param jobContent:
-     **/
-    String parseTasksAndSchedule(String jobContent);
-
-    /**
-     * @Author: TheBigBlue
      * @Description: 组装Tasks
      * @Date: 2020/6/13
      * @Param nodeTasks:
      * @Return:
      **/
-    String startNodeTasks(Map<String, NodeTask> nodeTasks, TaskListener statusListener) throws RuntimeException;
+    String startNodeTasks(String jobId, Map<String, NodeTask> nodeTasks, TaskListener statusListener) throws RuntimeException;
 
     /**
      * @Author: TheBigBlue

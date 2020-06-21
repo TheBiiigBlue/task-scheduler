@@ -11,3 +11,6 @@ spring:
        charset: UTF-8
        enabled: true
        force: true
+
+logger:
+  level: INFO

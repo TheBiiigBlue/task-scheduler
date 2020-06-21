@@ -47,7 +47,7 @@ public class ParentTask {
     public List<TaskResult> getTasksStatus() {
         Collection<NodeTask> values = nodeTasks.values();
         return values.stream().map(nodeTask ->
-                new TaskResult(nodeTask.getId(), nodeTask.getTaskStatus(), nodeTask.getTakeTime()))
+                new TaskResult(nodeTask.getTaskId(), nodeTask.getTaskStatus(), nodeTask.getTakeTime()))
                 .collect(Collectors.toList());
     }
 
