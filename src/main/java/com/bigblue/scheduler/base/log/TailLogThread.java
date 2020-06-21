@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 
 /**
  * @Author: TheBigBlue
- * @Description:
+ * @Description: 读取日志内容，发送websocket
  * @Date: 2020/6/21
  */
 public class TailLogThread extends Thread {
@@ -26,7 +26,7 @@ public class TailLogThread extends Thread {
     public void run() {
         try {
             String line;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 // 将实时日志通过WebSocket发送给客户端，给每一行添加一个HTML换行
                 session.getBasicRemote().sendText(line + "<br>");
             }

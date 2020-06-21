@@ -40,11 +40,9 @@ public class WebSocketController {
             String dateStr = DateUtil.getNowDateFormat(new Date());
             String filePath = new StringBuilder(System.getProperty("user.dir")).append("/logs/")
                     .append(dateStr).append("/").append(jobId).append(".log").toString();
-            // 执行tail -f命令
+            // 执行tail -f命令，由于是tail命令，需要在linux系统执行
             process = Runtime.getRuntime().exec("tail -f " + filePath);
             inputStream = process.getInputStream();
-//            inputStream = new FileInputStream("F:\\Cache\\IDEA202001\\WorkSpace\\GitHub\\TaskScheduler\\logs\\20200621\\123.log");
-
             // 一定要启动新的线程，防止InputStream阻塞处理WebSocket的线程
             new TailLogThread(inputStream, session).start();
         } catch (IOException e) {

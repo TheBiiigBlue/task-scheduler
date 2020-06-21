@@ -68,8 +68,6 @@ public class SchedulerLogger {
         String logPath = new StringBuilder(System.getProperty("user.dir")).append("/logs/")
                 .append(dateStr).append("/").append(logName).append(".log").toString();
         fileAppender.setFile(logPath);
-        //TODO delete
-        System.out.println(logPath);
         //设置consoleAppender
         ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
         consoleAppender.setContext(context);
