@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @Author: TheBigBlue
@@ -35,7 +36,8 @@ public class TaskScheduleTests {
         //解析报文，生成Task
         Map<String, NodeTask> nodeTaskMap = dataParse1();
         //调度
-        taskScheduler.startNodeTasks("123", nodeTaskMap, new SimpleTaskListener());
+        String jobId = UUID.randomUUID().toString().replace("-", "").substring(0, 7);
+        taskScheduler.startNodeTasks(jobId, nodeTaskMap, new SimpleTaskListener());
     }
 
     @GetMapping("/test2")
@@ -43,7 +45,8 @@ public class TaskScheduleTests {
         //解析报文，生成Task
         Map<String, NodeTask> nodeTaskMap = dataParse2();
         //调度
-        taskScheduler.startNodeTasks("123", nodeTaskMap, new SimpleTaskListener());
+        String jobId = UUID.randomUUID().toString().replace("-", "").substring(0, 7);
+        taskScheduler.startNodeTasks(jobId, nodeTaskMap, new SimpleTaskListener());
     }
 
     @PostMapping("/invoke")
